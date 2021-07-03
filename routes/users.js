@@ -3,7 +3,7 @@ const express = require('express');
 
 const bcrypt = require('bcryptjs')
 const router = express.Router();
-
+const passport= require('passport');
 //Usermodel
 const User = require('../models/User');
 
@@ -63,12 +63,47 @@ else{
                 email,
                 password
             });
-            console.log(newUser)
-             res.send('Hello');
-        }
-    })
+            //Hash password
+            
+     
 
-}
-});
-module.exports = router;
+            bcrypt.genSalt(10, (err, salt) => {
+                bcrypt.hash(newUser.password, salt, (err, hash) => {
+                  if (err) throw err;
+                  newUser.password = hash;
+                  newUser
+                    .save()
+                    .then(user => {
+                      req.flash(
+                        'success_msg',
+                        'You are now registered > log in'
+                      );
+                      res.redirect('/users/login');
+                    })
+                    .catch(err => console.log(err));
+                });
+              });
+            }
+          });
+        }
+      });
+      
+      // Login
+      router.post('/login', (req, res, next) => {
+        passport.authenticate('local', {
+          successRedirect: '/dashboard',
+          failureRedirect: '/users/login',
+          failureFlash: true
+        })(req, res, next);
+      });
+      
+      // Logout
+      router.get('/logout', (req, res) => {
+        req.logout();
+        req.flash('success_msg', 'You are logged out');
+        res.redirect('/users/login');
+      });
+      
+      module.exports = router;
+
  
