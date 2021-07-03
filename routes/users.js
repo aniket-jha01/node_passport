@@ -1,7 +1,12 @@
-const { Router } = require('express');
+
 const express = require('express');
 
+const bcrypt = require('bcryptjs')
 const router = express.Router();
+
+//Usermodel
+const User = require('../models/User');
+
 //Login page
 router.get('/login',(req,res)=> res.render('login'));
 //Register page
@@ -9,7 +14,7 @@ router.get('/register',(req,res)=> res.render('register'));
 
 //Register handle
 router.post('/register',(req,res)=>{
-const {name,email,password,password2  }= req.body;
+const {name,email,password,password2}= req.body;
 
 let errors = [];
 
@@ -20,12 +25,12 @@ if(!name || !email || !password || !password2 ){
 }
 
 //Check password match
-if(password2!=password){
-    errors.push({msg:"passwords do not match"});
+if(password!==password2){
+    errors.push({msg:'passwords do not match'});
 }
 
 if(password.length<5){
-    errors.push({msg:"password should be atleast 5 characters "});
+    errors.push({msg:'password should be atleast 5 characters '});
 
 }
 
@@ -39,7 +44,30 @@ if(errors.length>0){
     });
 }
 else{
-    res.send('Pass');
+    //Validation passed
+    User.findOne({email:email})
+     .then(user=>{
+        if(user){
+            errors.push({msg:'email is already registered'})
+         //signifies user exists
+         res.render('register',{
+            errors,
+            name,
+            email,
+            password,
+            password2
+        });
+        }else{
+            const newUser = new User({
+                name,
+                email,
+                password
+            });
+            console.log(newUser)
+             res.send('Hello');
+        }
+    })
+
 }
 });
 module.exports = router;
